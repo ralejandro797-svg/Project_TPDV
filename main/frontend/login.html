@@ -1,0 +1,74 @@
+﻿<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Melie Coffee POS</title>
+    <style>
+        body { font-family: 'Segoe UI', Arial, sans-serif; background-color: #121212; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        .login-box { background: #1e1e1e; color: white; padding: 35px; border-radius: 12px; box-shadow: 0 8px 25px rgba(0,0,0,0.5); width: 100%; max-width: 360px; text-align: center; border: 1px solid #333; }
+        .login-box img { max-width: 160px; border-radius: 8px; margin-bottom: 10px; }
+        .input-group { margin-bottom: 15px; text-align: left; }
+        .input-group label { display: block; margin-bottom: 5px; font-weight: bold; color: #d4af37; font-size: 14px; }
+        .input-group input { width: 100%; padding: 11px; border: 1px solid #444; background: #2a2a2a; color: white; border-radius: 6px; box-sizing: border-box; font-size: 15px; }
+        .btn-login { width: 100%; padding: 12px; background-color: #d4af37; color: black; border: none; border-radius: 6px; font-size: 16px; font-weight: bold; cursor: pointer; margin-top: 8px; }
+        .btn-login:hover { background-color: #e5c158; }
+        .btn-barra { width: 100%; padding: 12px; background-color: #0f172a; color: #38bdf8; border: 1.5px solid #38bdf8; border-radius: 6px; font-size: 15px; font-weight: bold; cursor: pointer; margin-top: 14px; }
+        .btn-barra:hover { background-color: #1e293b; }
+        .error-msg { color: #ff6b6b; margin-bottom: 15px; display: none; font-size: 14px; }
+    </style>
+</head>
+<body>
+    <div class="login-box">
+        <img src="IMG-20261007-WA0005.jpg" alt="Melie Coffee" onerror="this.style.display='none'">
+        <h2 style="margin: 5px 0 20px 0; color: #fff;">Melie Coffee POS</h2>
+        <div id="mensaje-error" class="error-msg"></div>
+        
+        <div class="input-group">
+            <label>Usuario:</label>
+            <input type="text" id="usuario" placeholder="Ej: admin">
+        </div>
+        <div class="input-group">
+            <label>Contraseña:</label>
+            <input type="password" id="password" placeholder="Tu contraseña" onkeypress="if(event.key==='Enter') intentarLogin()">
+        </div>
+        <button class="btn-login" onclick="intentarLogin()">🔑 Ingresar al Sistema</button>
+        
+        <hr style="border: 0; border-top: 1px solid #333; margin: 18px 0 6px 0;">
+        <button class="btn-barra" onclick="window.location.href='barra.html'">☕ Tickets en Vivo (Pantalla Barista)</button>
+    </div>
+
+    <script>
+        async function intentarLogin() {
+            const usuarioInput = document.getElementById('usuario').value;
+            const passwordInput = document.getElementById('password').value;
+            const mensajeError = document.getElementById('mensaje-error');
+            if (!usuarioInput || !passwordInput) {
+                mensajeError.innerText = "Por favor llena ambos campos";
+                mensajeError.style.display = "block";
+                return;
+            }
+            try {
+                const API_URL = window.location.port === "8000" ? window.location.origin : "http://192.168.1.84:8000";
+                const respuesta = await fetch(`${API_URL}/api/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ nombre: usuarioInput, password: passwordInput })
+                });
+                const resultado = await respuesta.json();
+                if (resultado.exito) {
+                    sessionStorage.setItem('usuarioActivo', JSON.stringify(resultado.usuario));
+                    sessionStorage.removeItem('fondoPreguntadoHoy');
+                    window.location.href = resultado.usuario.rol === 'admin' ? 'index.html' : 'caja.html';
+                } else {
+                    mensajeError.innerText = resultado.mensaje;
+                    mensajeError.style.display = "block";
+                }
+            } catch (error) {
+                mensajeError.innerText = "Error de conexión con el servidor.";
+                mensajeError.style.display = "block";
+            }
+        }
+    </script>
+</body>
+</html>
